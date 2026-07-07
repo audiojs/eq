@@ -279,3 +279,49 @@ test('parametricEq — lowshelf/highshelf bands default to Q=0.707 (matches stan
 	almost(dftMag(peqHi, 10000, fs), dftMag(stdHi, 10000, fs), 1e-9, 'highshelf band matches standalone highShelf')
 })
 
+
+// ── FIR EQ ──────────────────────────────────────────────────────────────
+import { firEq, firDesign } from './index.js'
+
+function goertzel (data, freq, sr = 44100, from = 2048, to = data.length - 2048) {
+	let w = 2 * Math.PI * freq / sr, cw = Math.cos(w)
+	let s1 = 0, s2 = 0
+	for (let i = from; i < to; i++) { let s0 = data[i] + 2 * cw * s1 - s2; s2 = s1; s1 = s0 }
+	return Math.sqrt(Math.max(0, s1 * s1 + s2 * s2 - 2 * cw * s1 * s2)) / (to - from)
+}
+function tone (f, n = 44100, sr = 44100) {
+	let d = new Float32Array(n)
+	for (let i = 0; i < n; i++) d[i] = 0.5 * Math.sin(2 * Math.PI * f * i / sr)
+	return d
+}
+
+test('firEq — coefficients are symmetric (linear phase)', () => {
+	let h = firDesign([{ f: 0, gain: 0 }, { f: 1000, gain: 6 }, { f: 20000, gain: -12 }], { taps: 255 })
+	for (let j = 0; j < h.length >> 1; j++) almost(h[j], h[h.length - 1 - j], 1e-12)
+})
+
+test('firEq — flat 0 dB response is exact identity', () => {
+	let d = tone(440)
+	let ref = Float32Array.from(d)
+	firEq(d, { response: [{ f: 0, gain: 0 }, { f: 22050, gain: 0 }] })
+	let err = 0
+	for (let i = 2048; i < d.length - 2048; i++) err = Math.max(err, Math.abs(d[i] - ref[i]))
+	ok(err < 1e-6, 'identity, max err ' + err.toExponential(1))
+})
+
+test('firEq — lowpass-shaped response passes 500 Hz, kills 8 kHz', () => {
+	let d = tone(500), e = tone(8000)
+	let opts = { response: [{ f: 0, gain: 0 }, { f: 1000, gain: 0 }, { f: 4000, gain: -80 }, { f: 22050, gain: -80 }] }
+	let r500 = goertzel(Float32Array.from(d), 500)
+	let r8k = goertzel(Float32Array.from(e), 8000)
+	firEq(d, opts); firEq(e, opts)
+	almost(20 * Math.log10(goertzel(d, 500) / r500), 0, 1, '500 Hz within ±1 dB')
+	ok(20 * Math.log10(goertzel(e, 8000) / r8k) < -40, '8 kHz ≥40 dB down')
+})
+
+test('firEq — +6 dB band boost measures +6 dB', () => {
+	let d = tone(1000)
+	let ref = goertzel(Float32Array.from(d), 1000)
+	firEq(d, { response: [{ f: 0, gain: 0 }, { f: 500, gain: 6 }, { f: 2000, gain: 6 }, { f: 4000, gain: 0 }, { f: 22050, gain: 0 }] })
+	almost(20 * Math.log10(goertzel(d, 1000) / ref), 6, 1)
+})
