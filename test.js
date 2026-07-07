@@ -325,3 +325,25 @@ test('firEq — +6 dB band boost measures +6 dB', () => {
 	firEq(d, { response: [{ f: 0, gain: 0 }, { f: 500, gain: 6 }, { f: 2000, gain: 6 }, { f: 4000, gain: 0 }, { f: 22050, gain: 0 }] })
 	almost(20 * Math.log10(goertzel(d, 1000) / ref), 6, 1)
 })
+
+// ── Dynamic EQ ─────────────────────────────────────────────────────────
+import { dynamicEq } from './index.js'
+
+test('dynamicEq — attenuates only the hot band, transparent below threshold', () => {
+	let sr = 44100, n = sr
+	let d = new Float32Array(n)
+	for (let i = 0; i < n; i++) d[i] = 0.5 * Math.sin(2 * Math.PI * 3000 * i / sr) + 0.1 * Math.sin(2 * Math.PI * 500 * i / sr)
+	let hot0 = goertzel(Float32Array.from(d), 3000), cool0 = goertzel(Float32Array.from(d), 500)
+	dynamicEq(d, { fs: sr, bands: [{ fc: 3000, Q: 2, threshold: -20, ratio: 4 }] })
+	let hotDb = 20 * Math.log10(goertzel(d, 3000) / hot0)
+	let coolDb = 20 * Math.log10(goertzel(d, 500) / cool0)
+	ok(hotDb < -3, '3 kHz reduced ' + hotDb.toFixed(1) + ' dB')
+	ok(Math.abs(coolDb) < 0.7, '500 Hz untouched (' + coolDb.toFixed(2) + ' dB)')
+	ok(d.every(isFinite), 'finite')
+
+	let q = new Float32Array(n)
+	for (let i = 0; i < n; i++) q[i] = 0.02 * Math.sin(2 * Math.PI * 3000 * i / sr)
+	let ref = goertzel(Float32Array.from(q), 3000)
+	dynamicEq(q, { fs: sr, bands: [{ fc: 3000, Q: 2, threshold: -20, ratio: 4 }] })
+	almost(20 * Math.log10(goertzel(q, 3000) / ref), 0, 0.3, 'below threshold transparent')
+})
