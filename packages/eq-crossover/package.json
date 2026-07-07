@@ -1,32 +1,32 @@
 {
   "name": "@audio/eq-crossover",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "N-way crossover network using Linkwitz-Riley filters",
   "type": "module",
   "sideEffects": false,
-  "main": "index.js",
+  "main": "crossover.js",
   "exports": {
-    ".": "./index.js",
+    ".": "./crossover.js",
     "./package.json": "./package.json"
   },
   "files": [
-    "index.js",
     "crossover.js"
   ],
-  "license": "MIT",
   "dependencies": {
     "digital-filter": "^2.0.0"
   },
-  "engines": {
-    "node": ">=18"
-  },
-  "description": "N-way crossover network using Linkwitz-Riley filters",
   "keywords": [
     "audio",
     "dsp",
     "eq",
+    "equalizer",
     "crossover"
   ],
+  "license": "MIT",
   "author": "Dmitry Iv. <dfcreative@gmail.com>",
+  "engines": {
+    "node": ">=18"
+  },
   "publishConfig": {
     "access": "public"
   }

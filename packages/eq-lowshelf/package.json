@@ -1,32 +1,32 @@
 {
   "name": "@audio/eq-lowshelf",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "Low-shelf filter — boost or cut below a corner frequency",
   "type": "module",
   "sideEffects": false,
-  "main": "index.js",
+  "main": "lowshelf.js",
   "exports": {
-    ".": "./index.js",
+    ".": "./lowshelf.js",
     "./package.json": "./package.json"
   },
   "files": [
-    "index.js",
     "lowshelf.js"
   ],
-  "license": "MIT",
   "dependencies": {
     "digital-filter": "^2.0.0"
   },
-  "engines": {
-    "node": ">=18"
-  },
-  "description": "Low-shelf filter — boost or cut below a corner frequency",
   "keywords": [
     "audio",
     "dsp",
     "eq",
+    "equalizer",
     "lowshelf"
   ],
+  "license": "MIT",
   "author": "Dmitry Iv. <dfcreative@gmail.com>",
+  "engines": {
+    "node": ">=18"
+  },
   "publishConfig": {
     "access": "public"
   }

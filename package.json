@@ -1,16 +1,20 @@
 {
   "name": "@audio/eq",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "sideEffects": false,
-  "description": "Equalization & tone shaping — shelves, parametric, graphic, crossover, baxandall, tilt",
+  "description": "Equalization & tone shaping — umbrella for @audio/eq-* atoms (shelves, parametric, graphic, baxandall, tilt, crossover)",
   "main": "index.js",
   "exports": {
-    ".": "./index.js",
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
-    "index.js"
+    "index.js",
+    "index.d.ts"
   ],
   "workspaces": [
     "packages/*"
@@ -25,13 +29,13 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@audio/eq-highshelf": "^0.1.0",
-    "@audio/eq-lowshelf": "^0.1.0",
-    "@audio/eq-parametric": "^0.1.0",
-    "@audio/eq-graphic": "^0.1.0",
-    "@audio/eq-baxandall": "^0.1.0",
-    "@audio/eq-tilt": "^0.1.0",
-    "@audio/eq-crossover": "^0.1.0"
+    "@audio/eq-highshelf": "^1.0.0",
+    "@audio/eq-lowshelf": "^1.0.0",
+    "@audio/eq-parametric": "^1.0.0",
+    "@audio/eq-graphic": "^1.0.0",
+    "@audio/eq-baxandall": "^1.0.0",
+    "@audio/eq-tilt": "^1.0.0",
+    "@audio/eq-crossover": "^1.0.0"
   },
   "engines": {
     "node": ">=18"
@@ -39,5 +43,14 @@
   "publishConfig": {
     "access": "public"
   },
-  "author": "Dmitry Iv. <dfcreative@gmail.com>"
+  "author": "Dmitry Iv. <dfcreative@gmail.com>",
+  "scripts": {
+    "test": "node test.js",
+    "test:all": "npm test --workspaces --if-present && npm test",
+    "publish:all": "npm publish --workspaces && npm publish"
+  },
+  "types": "index.d.ts",
+  "devDependencies": {
+    "tst": "^9.4.0"
+  }
 }

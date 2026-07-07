@@ -1,32 +1,32 @@
 {
   "name": "@audio/eq-baxandall",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "Baxandall tone control — bass/treble shelving with reciprocal characteristics",
   "type": "module",
   "sideEffects": false,
-  "main": "index.js",
+  "main": "baxandall.js",
   "exports": {
-    ".": "./index.js",
+    ".": "./baxandall.js",
     "./package.json": "./package.json"
   },
   "files": [
-    "index.js",
     "baxandall.js"
   ],
-  "license": "MIT",
   "dependencies": {
     "digital-filter": "^2.0.0"
   },
-  "engines": {
-    "node": ">=18"
-  },
-  "description": "Baxandall tone control — bass/treble shelving with reciprocal characteristics",
   "keywords": [
     "audio",
     "dsp",
     "eq",
+    "equalizer",
     "baxandall"
   ],
+  "license": "MIT",
   "author": "Dmitry Iv. <dfcreative@gmail.com>",
+  "engines": {
+    "node": ">=18"
+  },
   "publishConfig": {
     "access": "public"
   }
