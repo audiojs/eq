@@ -1,0 +1,20 @@
+{
+  "name": "@audio/eq-fir",
+  "version": "0.0.0",
+  "description": "FIR convolution EQ — linear-phase, arbitrary response curve (FFmpeg firequalizer; Matchering match-EQ substrate)",
+  "type": "module",
+  "sideEffects": false,
+  "private": true,
+  "keywords": [
+    "audio",
+    "dsp",
+    "eq",
+    "fir",
+    "linear-phase"
+  ],
+  "license": "MIT",
+  "author": "Dmitry Iv. <dfcreative@gmail.com>",
+  "engines": {
+    "node": ">=18"
+  }
+}

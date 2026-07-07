@@ -10,5 +10,6 @@
 | `@audio/eq-baxandall` | Baxandall bass/treble tone control |
 | `@audio/eq-tilt` | one-knob see-saw tilt EQ |
 | `@audio/eq-crossover` | Linkwitz-Riley N-way crossover |
+| `@audio/eq-fir` (planned) | linear-phase FIR EQ from arbitrary response — firequalizer / match-EQ |
 
 Extracted from [audio-filter](https://github.com/audiojs/audio-filter). Headphone crossfeed moved to `@audio/spatial-crossfeed`.
