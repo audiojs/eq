@@ -1,0 +1,33 @@
+{
+  "name": "@audio/eq-highshelf",
+  "version": "0.1.0",
+  "type": "module",
+  "sideEffects": false,
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "highshelf.js"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "digital-filter": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "description": "High-shelf filter — boost or cut above a corner frequency",
+  "keywords": [
+    "audio",
+    "dsp",
+    "eq",
+    "highshelf"
+  ],
+  "author": "Dmitry Iv. <dfcreative@gmail.com>",
+  "publishConfig": {
+    "access": "public"
+  }
+}
