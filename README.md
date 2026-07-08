@@ -12,4 +12,4 @@
 | `@audio/eq-crossover` | Linkwitz-Riley N-way crossover |
 | `@audio/eq-fir` (planned) | linear-phase FIR EQ from arbitrary response — firequalizer / match-EQ |
 
-Extracted from [audio-filter](https://github.com/audiojs/audio-filter). Headphone crossfeed moved to `@audio/spatial-crossfeed`.
+Extracted from [filter](https://github.com/audiojs/filter). Headphone crossfeed moved to `@audio/spatial-crossfeed`.
