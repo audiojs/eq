@@ -1,16 +1,18 @@
 {
   "name": "@audio/eq-graphic",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Graphic equalizer using ISO octave-band center frequencies",
   "type": "module",
   "sideEffects": false,
   "main": "graphic-eq.js",
   "exports": {
     ".": "./graphic-eq.js",
+    "./atom": "./atom.js",
     "./package.json": "./package.json"
   },
   "files": [
-    "graphic-eq.js"
+    "graphic-eq.js",
+    "atom.js"
   ],
   "dependencies": {
     "@audio/biquad": "^1.1.0"
@@ -29,5 +31,6 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "atom": "./atom.js"
 }
