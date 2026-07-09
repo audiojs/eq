@@ -4,8 +4,7 @@
  * @module  audio-filter/eq/graphic-eq
  */
 
-import { peaking } from 'digital-filter/iir/biquad.js'
-import filter from 'digital-filter/core/filter.js'
+import { peaking, filter } from '@audio/biquad'
 
 // ISO 266 / IEC 61260 1/1-octave nominal center frequencies
 let BANDS = [31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]

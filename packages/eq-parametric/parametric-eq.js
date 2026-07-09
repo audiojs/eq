@@ -4,8 +4,7 @@
  * @module  audio-filter/eq/parametric-eq
  */
 
-import { peaking, lowshelf, highshelf } from 'digital-filter/iir/biquad.js'
-import filter from 'digital-filter/core/filter.js'
+import { peaking, lowshelf, highshelf, filter } from '@audio/biquad'
 
 /**
  * @param {Float64Array} data - Input (modified in-place)

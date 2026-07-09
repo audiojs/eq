@@ -5,8 +5,7 @@
  * @module  audio-filter/eq/baxandall
  */
 
-import { lowshelf, highshelf } from 'digital-filter/iir/biquad.js'
-import dfFilter from 'digital-filter/core/filter.js'
+import { lowshelf, highshelf, filter } from '@audio/biquad'
 
 export default function baxandall (data, params) {
 	let bass = params.bass ?? 0       // dB
@@ -27,8 +26,8 @@ export default function baxandall (data, params) {
 		params._treble = treble; params._fTreble = fTreble; params._tFs = fs
 	}
 
-	dfFilter(data, params._b)
-	dfFilter(data, params._t)
+	filter(data, params._b)
+	filter(data, params._t)
 
 	return data
 }

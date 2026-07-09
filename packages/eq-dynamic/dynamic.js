@@ -2,7 +2,7 @@
 // the generalized de-esser). Bandpass sidechain → envelope → over-threshold → peaking cut
 // (or upward gain), coefficients re-derived per block for smoothness without per-sample cost.
 
-import { bandpass, peaking } from 'digital-filter/iir/biquad.js'
+import { bandpass, peaking } from '@audio/biquad'
 
 const BLOCK = 64
 

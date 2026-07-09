@@ -5,8 +5,7 @@
  * @module  audio-filter/eq/tilt
  */
 
-import { lowshelf, highshelf } from 'digital-filter/iir/biquad.js'
-import dfFilter from 'digital-filter/core/filter.js'
+import { lowshelf, highshelf, filter } from '@audio/biquad'
 
 export default function tilt (data, params) {
 	let gain = params.gain ?? 0       // dB: positive = bass boost / treble cut
@@ -21,8 +20,8 @@ export default function tilt (data, params) {
 		params._gain = gain; params._pivot = pivot; params._fs = fs
 	}
 
-	dfFilter(data, params._lo)
-	dfFilter(data, params._hi)
+	filter(data, params._lo)
+	filter(data, params._hi)
 
 	return data
 }

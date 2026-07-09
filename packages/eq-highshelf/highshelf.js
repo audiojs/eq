@@ -5,8 +5,7 @@
  * @module  audio-filter/eq/highshelf
  */
 
-import { highshelf } from 'digital-filter/iir/biquad.js'
-import dfFilter from 'digital-filter/core/filter.js'
+import { highshelf, filter } from '@audio/biquad'
 
 export default function highShelf (data, params) {
 	let fc = params.fc || 4000, gain = params.gain || 0
@@ -17,5 +16,5 @@ export default function highShelf (data, params) {
 		params._fc = fc; params._gain = gain; params._Q = Q; params._fs = fs
 	}
 
-	return dfFilter(data, params._hi)
+	return filter(data, params._hi)
 }
