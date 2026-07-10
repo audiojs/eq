@@ -1,4 +1,4 @@
-// atom manifest — Baxandall bass/treble tone control per @audio/atom CONTRACT.
+// atom manifest — Baxandall bass/treble tone control per @audio/compile CONTRACT.
 // All params live; the kernel re-derives each shelf on change and keeps biquad state
 // on the params object — one persistent object per channel.
 

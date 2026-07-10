@@ -1,4 +1,4 @@
-// atom manifest — tilt EQ (see-saw shelving around a pivot) per @audio/atom CONTRACT.
+// atom manifest — tilt EQ (see-saw shelving around a pivot) per @audio/compile CONTRACT.
 // gain/pivot are live; the kernel re-derives shelves on change and keeps biquad state
 // on the params object — one persistent object per channel.
 

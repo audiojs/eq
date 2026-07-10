@@ -1,4 +1,4 @@
-// atom manifest — 10-band ISO 266 graphic EQ per @audio/atom CONTRACT.
+// atom manifest — 10-band ISO 266 graphic EQ per @audio/compile CONTRACT.
 // One live dB param per octave band; the kernel rebuilds its biquad cascade when any
 // gain changes (self-detected via key) and keeps filter state on the params object —
 // one persistent object per channel.

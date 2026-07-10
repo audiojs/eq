@@ -1,5 +1,5 @@
 // atom manifest — dynamic EQ (band energy drives that band's peaking gain; Pro-Q3 /
-// soothe class, the generalized de-esser) per @audio/atom CONTRACT. The kernel builds
+// soothe class, the generalized de-esser) per @audio/compile CONTRACT. The kernel builds
 // its sidechain/envelope state inside each call — declared streaming: false: the host
 // materializes the whole timeline and calls process once, per channel. Scalar form is
 // ONE band; multi-band curves take an array argument — direct-import for those.
