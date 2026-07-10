@@ -7,12 +7,16 @@
   "main": "graphic-eq.js",
   "exports": {
     ".": "./graphic-eq.js",
-    "./audio": "./audio.js",
+    "./audio": {
+      "types": "./audio.d.ts",
+      "default": "./audio.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
     "graphic-eq.js",
-    "audio.js"
+    "audio.js",
+    "audio.d.ts"
   ],
   "dependencies": {
     "@audio/biquad": "^1.1.0"
