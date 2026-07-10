@@ -54,5 +54,9 @@
   "types": "index.d.ts",
   "devDependencies": {
     "tst": "^9.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/audiojs/eq.git"
   }
 }
