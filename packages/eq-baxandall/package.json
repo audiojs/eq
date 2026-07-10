@@ -1,6 +1,6 @@
 {
   "name": "@audio/eq-baxandall",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Baxandall tone control — bass/treble shelving with reciprocal characteristics",
   "type": "module",
   "sideEffects": false,
