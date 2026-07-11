@@ -1,12 +1,16 @@
 {
   "name": "@audio/eq-dynamic",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Dynamic EQ — per-band peaking gain driven by band energy (Pro-Q3/soothe class, generalized de-esser)",
   "type": "module",
   "sideEffects": false,
   "main": "dynamic.js",
+  "types": "./dynamic.d.ts",
   "exports": {
-    ".": "./dynamic.js",
+    ".": {
+      "types": "./dynamic.d.ts",
+      "default": "./dynamic.js"
+    },
     "./audio": {
       "types": "./audio.d.ts",
       "default": "./audio.js"
@@ -15,6 +19,7 @@
   },
   "files": [
     "dynamic.js",
+    "dynamic.d.ts",
     "audio.js",
     "audio.d.ts"
   ],
@@ -41,5 +46,6 @@
     "type": "git",
     "url": "git+https://github.com/audiojs/eq.git",
     "directory": "packages/eq-dynamic"
-  }
+  },
+  "funding": "https://github.com/sponsors/audiojs"
 }

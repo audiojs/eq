@@ -1,6 +1,6 @@
 {
   "name": "@audio/eq-lowshelf",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Low-shelf filter — boost or cut below a corner frequency",
   "type": "module",
   "sideEffects": false,
@@ -34,5 +34,6 @@
     "type": "git",
     "url": "git+https://github.com/audiojs/eq.git",
     "directory": "packages/eq-lowshelf"
-  }
+  },
+  "funding": "https://github.com/sponsors/audiojs"
 }

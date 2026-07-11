@@ -1,12 +1,16 @@
 {
   "name": "@audio/eq-tilt",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Tilt EQ — see-saw around a pivot frequency",
   "type": "module",
   "sideEffects": false,
   "main": "tilt.js",
+  "types": "./tilt.d.ts",
   "exports": {
-    ".": "./tilt.js",
+    ".": {
+      "types": "./tilt.d.ts",
+      "default": "./tilt.js"
+    },
     "./audio": {
       "types": "./audio.d.ts",
       "default": "./audio.js"
@@ -15,6 +19,7 @@
   },
   "files": [
     "tilt.js",
+    "tilt.d.ts",
     "audio.js",
     "audio.d.ts"
   ],
@@ -41,5 +46,6 @@
     "type": "git",
     "url": "git+https://github.com/audiojs/eq.git",
     "directory": "packages/eq-tilt"
-  }
+  },
+  "funding": "https://github.com/sponsors/audiojs"
 }

@@ -1,12 +1,16 @@
 {
   "name": "@audio/eq-baxandall",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Baxandall tone control — bass/treble shelving with reciprocal characteristics",
   "type": "module",
   "sideEffects": false,
   "main": "baxandall.js",
+  "types": "./baxandall.d.ts",
   "exports": {
-    ".": "./baxandall.js",
+    ".": {
+      "types": "./baxandall.d.ts",
+      "default": "./baxandall.js"
+    },
     "./audio": {
       "types": "./audio.d.ts",
       "default": "./audio.js"
@@ -15,6 +19,7 @@
   },
   "files": [
     "baxandall.js",
+    "baxandall.d.ts",
     "audio.js",
     "audio.d.ts"
   ],
@@ -41,5 +46,6 @@
     "type": "git",
     "url": "git+https://github.com/audiojs/eq.git",
     "directory": "packages/eq-baxandall"
-  }
+  },
+  "funding": "https://github.com/sponsors/audiojs"
 }

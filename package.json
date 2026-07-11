@@ -1,6 +1,6 @@
 {
   "name": "@audio/eq",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "sideEffects": false,
   "description": "Equalization & tone shaping — umbrella for @audio/eq-* atoms (shelves, parametric, graphic, baxandall, tilt, crossover)",
@@ -58,5 +58,6 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/audiojs/eq.git"
-  }
+  },
+  "funding": "https://github.com/sponsors/audiojs"
 }

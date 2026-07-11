@@ -1,6 +1,6 @@
 {
   "name": "@audio/eq-crossover",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "N-way crossover network using Linkwitz-Riley filters",
   "type": "module",
   "sideEffects": false,
@@ -34,5 +34,6 @@
     "type": "git",
     "url": "git+https://github.com/audiojs/eq.git",
     "directory": "packages/eq-crossover"
-  }
+  },
+  "funding": "https://github.com/sponsors/audiojs"
 }

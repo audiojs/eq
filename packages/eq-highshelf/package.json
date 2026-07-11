@@ -1,6 +1,6 @@
 {
   "name": "@audio/eq-highshelf",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "High-shelf filter — boost or cut above a corner frequency",
   "type": "module",
   "sideEffects": false,
@@ -34,5 +34,6 @@
     "type": "git",
     "url": "git+https://github.com/audiojs/eq.git",
     "directory": "packages/eq-highshelf"
-  }
+  },
+  "funding": "https://github.com/sponsors/audiojs"
 }
