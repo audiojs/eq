@@ -37,7 +37,8 @@
     "@audio/eq-tilt": "^1.0.0",
     "@audio/eq-crossover": "^1.0.0",
     "@audio/eq-fir": "^1.0.0",
-    "@audio/eq-dynamic": "^1.0.0"
+    "@audio/eq-dynamic": "^1.0.0",
+    "@audio/eq-fit": "^0.1.0"
   },
   "engines": {
     "node": ">=18"

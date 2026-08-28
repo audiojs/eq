@@ -12,5 +12,6 @@
 | `@audio/eq-crossover` | Linkwitz-Riley N-way crossover |
 | `@audio/eq-fir` | linear-phase FIR EQ from arbitrary response — firequalizer / match-EQ |
 | `@audio/eq-dynamic` | dynamic EQ — per-band peaking gain driven by band energy (Pro-Q3/soothe class) |
+| `@audio/eq-fit` | fit an N-band parametric EQ to a target curve (Levenberg–Marquardt) — headphone AutoEQ / match-EQ / room correction; reads and writes Equalizer APO `ParametricEQ.txt` |
 
 Extracted from [filter](https://github.com/audiojs/filter). Headphone crossfeed moved to `@audio/spatial-crossfeed`.

@@ -1,5 +1,6 @@
 import test, { almost, ok, is } from 'tst'
 import * as audio from './index.js'
+import * as biquad from '@audio/biquad'
 import { lowshelf, highshelf } from 'digital-filter/iir/biquad.js'
 import { dftMag, magDB, impulse, dc, EPSILON, LOOSE } from './test/util.js'
 
@@ -346,4 +347,25 @@ test('dynamicEq — attenuates only the hot band, transparent below threshold', 
 	let ref = goertzel(Float32Array.from(q), 3000)
 	dynamicEq(q, { fs: sr, bands: [{ fc: 3000, Q: 2, threshold: -20, ratio: 4 }] })
 	almost(20 * Math.log10(goertzel(q, 3000) / ref), 0, 0.3, 'below threshold transparent')
+})
+
+// =================== eq-fit ===================
+test('fitEq — recovers a peaking band from its own response and round-trips Equalizer APO text', () => {
+	let fs = 44100
+	let [b] = [{ type: 'peak', fc: 1000, Q: 1.5, gain: -6 }]
+	let target = f => 20 * Math.log10(audio.eqResponse ? 1 : 1) + 20 * Math.log10(peakMag(f))
+	function peakMag (f) { // |H| of the RBJ peaking section, via the same biquad the fitter uses
+		let { peaking, magnitude } = biquad
+		return magnitude(peaking(b.fc, b.Q, fs, b.gain), f, fs)
+	}
+	let r = audio.fitEq(target, { fs, bands: 3, shelves: false })
+	ok(r.bands.length >= 1, 'at least one band')
+	let best = r.bands.reduce((a, c) => Math.abs(c.gain) > Math.abs(a.gain) ? c : a)
+	almost(best.fc, 1000, 20, 'fc ' + best.fc.toFixed(1))
+	almost(best.gain, -6, 0.2, 'gain ' + best.gain.toFixed(2))
+	ok(r.error < 0.1, 'rms error ' + r.error.toFixed(3) + ' dB')
+	let txt = audio.toEqualizerApo(r)
+	ok(/Filter 1: ON PK Fc \d+ Hz Gain -?[\d.]+ dB Q [\d.]+/.test(txt), 'APO line')
+	let back = audio.fromEqualizerApo(txt)
+	is(back.bands.length, r.bands.length, 'APO round trip band count')
 })
