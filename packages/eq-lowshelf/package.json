@@ -6,11 +6,15 @@
   "sideEffects": false,
   "main": "lowshelf.js",
   "exports": {
-    ".": "./lowshelf.js",
+    ".": {
+      "types": "./lowshelf.d.ts",
+      "default": "./lowshelf.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
-    "lowshelf.js"
+    "lowshelf.js",
+    "lowshelf.d.ts"
   ],
   "dependencies": {
     "@audio/biquad": "^1.1.0"
@@ -35,5 +39,6 @@
     "url": "git+https://github.com/audiojs/eq.git",
     "directory": "packages/eq-lowshelf"
   },
-  "funding": "https://github.com/sponsors/audiojs"
+  "funding": "https://github.com/sponsors/audiojs",
+  "types": "./lowshelf.d.ts"
 }

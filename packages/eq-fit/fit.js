@@ -19,7 +19,7 @@
 //     (central differences) and trust-region-style damping updates per Nocedal & Wright,
 //     "Numerical Optimization" 2nd ed. (2006), §10.3.
 //
-// Preamp convention (headroom make-up gain so the fitted chain never clips at unity input)
+// Preamp convention (suggested frequency-response headroom from a finite scan)
 // matches AutoEQ's ParametricEQ.txt output: preamp = -max(0, peak of the fitted cascade).
 
 import { peaking, lowshelf, highshelf, magnitude, cascadeMagnitude } from '@audio/biquad'
@@ -447,7 +447,7 @@ function refine (bands, freqsGrid, targetDb, o) {
 	return decodeParams(p, types, o)
 }
 
-// ── preamp: headroom make-up gain so the fitted chain never clips at unity input ──
+// ── preamp: suggested frequency-response headroom from a finite scan ──
 
 function scanPeakDb (bands, fs, fMin, fMax) {
 	if (!bands.length) return 0

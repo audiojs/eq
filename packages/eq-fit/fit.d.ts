@@ -73,8 +73,9 @@ export interface FitResult {
   /** fitted bands, sorted by `fc` — pass straight into `@audio/eq-parametric`'s `params.bands` */
   bands: FitBand[]
   /**
-   * headroom make-up gain, dB: `-max(0, peak of the fitted cascade)`, so `response(f)` never
-   * exceeds 0 dB (the AutoEQ `ParametricEQ.txt` convention) — or `0` if `opts.preamp === false`
+   * suggested headroom, dB: `-max(0, scanned peak of the fitted cascade)`,
+   * or `0` if `opts.preamp === false`. Apply separately from the bands. This
+   * frequency-response estimate does not guarantee a time-domain peak ceiling.
    */
   preamp: number
   /** weighted RMS error, dB, of the fitted cascade (no preamp) vs the target, over the eval grid */

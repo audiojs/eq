@@ -36,10 +36,9 @@ export interface FirEqOptions extends FirDesignOptions {
 export function design(response: FirResponsePoint[] | ((f: number) => number), options?: FirDesignOptions): Float64Array
 
 /**
- * Apply the FIR EQ in place, zero-latency (the output is shifted back by the filter's
- * group delay so it stays time-aligned with the input — this is the FFmpeg firequalizer /
- * Matchering match-EQ idiom: match a target spectrum exactly, without moving the signal
- * in time).
+ * Apply the finite, windowed FIR in place. Group delay is compensated by reading
+ * ahead within the whole buffer, so the result stays time-aligned. The designed
+ * magnitude response is an approximation whose resolution depends on tap count.
  *
  * Unlike the biquad-based atoms in this family, `fir` is **not** a params-as-state
  * kernel — it holds no filter memory across calls. `taps`/`response` are re-designed (or

@@ -6,11 +6,15 @@
   "sideEffects": false,
   "main": "fir.js",
   "exports": {
-    ".": "./fir.js",
+    ".": {
+      "types": "./fir.d.ts",
+      "default": "./fir.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
-    "fir.js"
+    "fir.js",
+    "fir.d.ts"
   ],
   "keywords": [
     "audio",
@@ -33,5 +37,6 @@
     "url": "git+https://github.com/audiojs/eq.git",
     "directory": "packages/eq-fir"
   },
-  "funding": "https://github.com/sponsors/audiojs"
+  "funding": "https://github.com/sponsors/audiojs",
+  "types": "./fir.d.ts"
 }

@@ -6,11 +6,15 @@
   "sideEffects": false,
   "main": "crossover.js",
   "exports": {
-    ".": "./crossover.js",
+    ".": {
+      "types": "./crossover.d.ts",
+      "default": "./crossover.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
-    "crossover.js"
+    "crossover.js",
+    "crossover.d.ts"
   ],
   "dependencies": {
     "digital-filter": "^2.0.0"
@@ -35,5 +39,6 @@
     "url": "git+https://github.com/audiojs/eq.git",
     "directory": "packages/eq-crossover"
   },
-  "funding": "https://github.com/sponsors/audiojs"
+  "funding": "https://github.com/sponsors/audiojs",
+  "types": "./crossover.d.ts"
 }

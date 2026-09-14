@@ -10,7 +10,7 @@ npm install @audio/eq-fir
 import firEq, { design } from '@audio/eq-fir'
 ```
 
-FFmpeg firequalizer's class of EQ: frequency-sampling design builds an odd-length, type-I symmetric FIR from a target dB curve (a list of `{f, gain}` points, linearly interpolated, or a `frequency => dB` function), Hann-windowed against Gibbs ripple. Zero-latency apply — the group delay of `(taps-1)/2` samples is compensated internally, so the filtered output stays time-aligned with the input. This is the substrate for match-EQ tools like Matchering: hand it a captured target spectrum and it reproduces it exactly, phase-linearly.
+FFmpeg firequalizer's class of EQ: frequency-sampling design builds an odd-length, type-I symmetric FIR from a target dB curve (a list of `{f, gain}` points, linearly interpolated, or a `frequency => dB` function), Hann-windowed against Gibbs ripple. Whole-buffer, time-aligned apply — the group delay of `(taps-1)/2` samples is compensated internally, so the filtered output stays time-aligned with the input. This is the substrate for match-EQ tools like Matchering: hand it a captured target spectrum and it approximates that response with a finite, windowed FIR. Resolution and ripple depend on the tap count.
 
 ```js
 firEq(data, { response: [{ f: 100, gain: -3 }, { f: 1000, gain: 0 }, { f: 8000, gain: 4 }] })
@@ -30,7 +30,7 @@ firEq(bufB, { coefs })
 
 Unlike the biquad-based atoms in this family, `firEq` holds no state across calls — `taps`/`response` (or `coefs`) are used fresh every call, convolved directly against `data` with zero-padded edges. There's no streaming/chunked mode: call it with the whole buffer. Only typed arrays are accepted (`Float32Array`/`Float64Array`, via `TypedArray#set`) — plain `number[]` is not supported.
 
-**Use when:** matching a captured target spectrum exactly, or any EQ curve too irregular for a handful of biquads — where phase linearity matters more than CPU cost.
+**Use when:** approximating a captured target spectrum with a linear-phase filter, or any EQ curve too irregular for a handful of biquads — where phase linearity matters more than CPU cost.
 
 ---
 

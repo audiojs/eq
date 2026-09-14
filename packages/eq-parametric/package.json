@@ -6,11 +6,15 @@
   "sideEffects": false,
   "main": "parametric-eq.js",
   "exports": {
-    ".": "./parametric-eq.js",
+    ".": {
+      "types": "./parametric-eq.d.ts",
+      "default": "./parametric-eq.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
-    "parametric-eq.js"
+    "parametric-eq.js",
+    "parametric-eq.d.ts"
   ],
   "dependencies": {
     "@audio/biquad": "^1.1.0"
@@ -35,5 +39,6 @@
     "url": "git+https://github.com/audiojs/eq.git",
     "directory": "packages/eq-parametric"
   },
-  "funding": "https://github.com/sponsors/audiojs"
+  "funding": "https://github.com/sponsors/audiojs",
+  "types": "./parametric-eq.d.ts"
 }

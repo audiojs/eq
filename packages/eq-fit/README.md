@@ -16,7 +16,7 @@ The missing math between curve producers (`@audio/spectral-target`, `@audio/meas
 // from control points
 let r = fit([{ f: 100, gain: 4 }, { f: 3000, gain: -3 }, { f: 8000, gain: 2 }], { bands: 6 })
 r.bands     // [{ type: 'peak', fc, Q, gain }, ...] — ready for @audio/eq-parametric's params.bands
-r.preamp    // dB, ≤ 0 — headroom so the fitted chain never clips
+r.preamp    // dB, ≤ 0 — suggested frequency-response headroom
 r.error     // weighted RMS dB error of the fit
 r.response  // f => dB, the fitted cascade's response incl. preamp
 
@@ -30,6 +30,8 @@ fit(measureResponse(impulseResponse, { fs }), { fs })
 // apply it
 import parametricEq from '@audio/eq-parametric'
 parametricEq(data, { bands: r.bands, fs: 44100 })
+const preampGain = 10 ** (r.preamp / 20)
+for (let i = 0; i < data.length; i++) data[i] *= preampGain
 
 // interchange with AutoEQ / Equalizer APO
 import { toEqualizerApo, fromEqualizerApo } from '@audio/eq-fit'
@@ -53,7 +55,7 @@ fromEqualizerApo(apoText)     // { bands, preamp } — reads AutoEQ's own Parame
 
 `target` accepts any of: `{f, gain}[]` control points (log-frequency interpolation), an `f => dB` function, a `Float32Array` of dB-per-bin over `[0, fs/2]` (the `@audio/spectral-target` bin-grid convention), or `{freqs, db}` (the `@audio/measure-response` shape). Deterministic — no randomness anywhere in either stage, so the same input always returns the same bands.
 
-`preamp` follows AutoEQ's own `ParametricEQ.txt` convention: `-max(0, peak of the fitted cascade)`, so `response(f)` (which includes it) never exceeds 0 dB — the fitted EQ is safe to apply to a full-scale signal without digital clipping.
+`preamp` is `-max(0, peak of the fitted cascade)` estimated over the evaluation grid. It supplies frequency-response headroom; `parametricEq` does not apply it automatically. This estimate does not guarantee a time-domain sample or true-peak ceiling. Measure the processed signal and use peak control when required.
 
 **Use when:** turning a measured or target curve — a headphone correction target, a room-EQ deviation curve, a captured reference spectrum — into a small parametric band list a real-time EQ (or a hardware unit that only understands PK/LSC/HSC text) can use, instead of the full-resolution FIR alternative (`@audio/eq-fir`).
 
