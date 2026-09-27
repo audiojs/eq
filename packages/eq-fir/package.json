@@ -1,6 +1,6 @@
 {
   "name": "@audio/eq-fir",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "FIR convolution EQ — linear-phase, arbitrary magnitude response (frequency-sampling design; firequalizer / match-EQ class)",
   "type": "module",
   "sideEffects": false,
@@ -11,6 +11,9 @@
       "default": "./fir.js"
     },
     "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "fourier-transform": "^2.4.1"
   },
   "files": [
     "fir.js",

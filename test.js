@@ -301,6 +301,21 @@ test('firEq — coefficients are symmetric (linear phase)', () => {
 	for (let j = 0; j < h.length >> 1; j++) almost(h[j], h[h.length - 1 - j], 1e-12)
 })
 
+// Overlap-add (FFT) equals the direct sum Σ h[j]·x[i − j + half] (outside the input silent), sample for sample after the
+// Float32 store: kernels on both sides of the switch (32 taps), inputs empty, one sample, shorter than, equal to and
+// longer than the kernel, and across several blocks.
+test('firEq — FFT overlap-add equals the direct convolution', () => {
+	let seed = 3, rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647
+	let direct = (x, h) => { let N = h.length, half = (N - 1) / 2, out = new Float32Array(x.length); for (let i = 0; i < x.length; i++) { let s = 0; for (let j = 0; j < N; j++) { let idx = i - j + half; if (idx >= 0 && idx < x.length) s += h[j] * x[idx] } out[i] = s } return out }
+	let resp = [{ f: 0, gain: 3 }, { f: 500, gain: -6 }, { f: 4000, gain: 6 }, { f: 22050, gain: -12 }]
+	for (let taps of [31, 33, 255]) for (let L of [0, 1, 17, taps - 1, taps, taps + 1, 9000]) {
+		let x = Float32Array.from({ length: L }, () => rnd() * 2 - 1), h = firDesign(resp, { taps })
+		let want = direct(x, h), got = firEq(Float32Array.from(x), { coefs: h }), diff = 0
+		for (let i = 0; i < L; i++) if (got[i] !== want[i]) diff++
+		is(diff, 0, `${taps} taps, ${L} samples`)
+	}
+})
+
 test('firEq — flat 0 dB response is exact identity', () => {
 	let d = tone(440)
 	let ref = Float32Array.from(d)
