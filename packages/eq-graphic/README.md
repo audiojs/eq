@@ -22,7 +22,7 @@ for (let buf of stream) graphicEq(buf, params)
 | `gains` | `{}` | Per-band gain in dB, keyed by center frequency (e.g. `1000`) or its rounded form |
 | `fs` | `44100` | Sample rate, Hz |
 
-Pass the same `params` object across successive calls — the filter cascade is cached on it and only rebuilt when `gains`/`fs` change by value, so state carries across block boundaries automatically.
+Pass the same `params` object across successive calls — the filter cascade is cached on it; a change of `gains`/`fs` by value rebuilds only the coefficients and each band's state carries over, so state continues across block boundaries and automation is click-free.
 
 **Use when:** the classic mixing-console/PA slider EQ — fixed bands, familiar layout, quick broad-strokes shaping.
 

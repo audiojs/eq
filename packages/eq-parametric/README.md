@@ -29,7 +29,7 @@ for (let buf of stream) parametricEq(buf, params)
 | `bands[].type` | `'peak'` | `'peak'`, `'lowshelf'`, or `'highshelf'` |
 | `fs` | `44100` | Sample rate, Hz |
 
-Pass the same `params` object across successive calls — the filter cascade is cached on it and only rebuilt when any band's `fc`/`Q`/`gain`/`type` or `fs` changes by value, so state carries across block boundaries automatically.
+Pass the same `params` object across successive calls — the filter cascade is cached on it; a change of any band's `fc`/`Q`/`gain`/`type` or `fs` by value rebuilds only the coefficients and each band's state carries over, so state continues across block boundaries and automation is click-free.
 
 **Use when:** general-purpose multi-band corrective or creative EQ — mixing-channel EQ, mastering surgical cuts, anywhere a fixed band layout (graphic) or two-knob tone stack (baxandall/tilt) is too rigid.
 

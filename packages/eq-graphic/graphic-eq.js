@@ -17,20 +17,25 @@ export default function graphicEq (data, params) {
 	let fs = params.fs || 44100
 	let gains = params.gains || {}
 
-	// Rebuild coefficients when gains or fs change
+	// New coefficients when gains or fs change; each band keeps its filter state, so a moving gain (automation, a
+	// slider) doesn't restart the filters.
 	let key = fs + ':' + JSON.stringify(gains)
 	if (params._key !== key) {
-		params._filters = []
+		params._filters ??= BANDS.map(() => ({}))
 		for (let i = 0; i < BANDS.length; i++) {
-			let fc = BANDS[i]
-			let g = gains[fc] || gains[Math.round(fc)] || 0
-			if (g === 0) continue
-			params._filters.push({ coefs: peaking(fc, 1.4, fs, g) })
+			let fc = BANDS[i], g = gains[fc] || gains[Math.round(fc)] || 0
+			Object.assign(params._filters[i], { coefs: peaking(fc, 1.4, fs, g), flat: !g })
 		}
 		params._key = key
 	}
 
-	for (let f of params._filters) filter(data, f)
+	// A band at 0 dB is the identity biquad (b = a): it runs while its state rings out from the gain it left, so
+	// returning to 0 dB and leaving it stay continuous; at rest it is skipped, state cleared (a flat band costs nothing).
+	for (let f of params._filters) {
+		let s = f.state?.[0]
+		if (!f.flat || s && Math.abs(s[0]) + Math.abs(s[1]) > 1e-30) filter(data, f)
+		else f.state = null
+	}
 
 	return data
 }

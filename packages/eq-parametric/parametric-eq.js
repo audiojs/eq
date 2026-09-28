@@ -18,10 +18,12 @@ export default function parametricEq (data, params) {
 	// content key: rebuild filters whenever any band's fc/Q/gain/type or fs changes
 	let key = fs + '|' + bands.map(b => b.fc + ',' + b.Q + ',' + b.gain + ',' + b.type).join(';')
 	if (params._key !== key) {
-		params._filters = bands.map(b => {
+		// each band keeps its state across new coefficients: a moving parameter must not restart the filter
+		let prev = params._filters
+		params._filters = bands.map((b, i) => {
 			let fn = b.type === 'lowshelf' ? lowshelf : b.type === 'highshelf' ? highshelf : peaking
 			let Q = b.Q == null ? (fn === peaking ? 1 : 0.707) : b.Q
-			return { coefs: fn(b.fc, Q, fs, b.gain || 0) }
+			return { coefs: fn(b.fc, Q, fs, b.gain || 0), state: prev?.[i]?.state }
 		})
 		params._key = key
 	}

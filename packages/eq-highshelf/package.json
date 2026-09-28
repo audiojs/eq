@@ -1,6 +1,6 @@
 {
   "name": "@audio/eq-highshelf",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "High-shelf filter — boost or cut above a corner frequency",
   "type": "module",
   "sideEffects": false,

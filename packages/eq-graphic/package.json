@@ -1,6 +1,6 @@
 {
   "name": "@audio/eq-graphic",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Graphic equalizer using ISO octave-band center frequencies",
   "type": "module",
   "sideEffects": false,

@@ -1,6 +1,6 @@
 {
   "name": "@audio/eq-lowshelf",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Low-shelf filter — boost or cut below a corner frequency",
   "type": "module",
   "sideEffects": false,

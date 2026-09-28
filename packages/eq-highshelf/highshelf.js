@@ -12,7 +12,9 @@ export default function highShelf (data, params) {
 	let Q = params.Q == null ? 0.707 : params.Q, fs = params.fs || 44100
 
 	if (!params._hi || params._fc !== fc || params._gain !== gain || params._Q !== Q || params._fs !== fs) {
-		params._hi = { coefs: [highshelf(fc, Q, fs, gain)] }
+		// new coefficients, the same state: a parameter moving (automation, a slider) must not restart the filter
+		params._hi ??= {}
+		params._hi.coefs = [highshelf(fc, Q, fs, gain)]
 		params._fc = fc; params._gain = gain; params._Q = Q; params._fs = fs
 	}
 

@@ -24,7 +24,7 @@ for (let buf of stream) highShelf(buf, params)
 | `Q` | `0.707` | Shelf slope (1 = RBJ "shelf slope = 1", steepest monotonic; lower is gentler) |
 | `fs` | `44100` | Sample rate, Hz |
 
-Pass the same `params` object across successive calls — coefficients and filter memory are cached on it and only rebuilt when `fc`/`gain`/`Q`/`fs` change, so state carries across block boundaries automatically.
+Pass the same `params` object across successive calls — coefficients and filter memory are cached on it; a change of `fc`/`gain`/`Q`/`fs` rebuilds only the coefficients and the memory carries over, so state continues across block boundaries and automation is click-free.
 
 **Use when:** brightening or dulling above a corner frequency — air band, presence, de-harsh; the top half of a Baxandall-style tone stack.
 

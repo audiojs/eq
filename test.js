@@ -228,7 +228,7 @@ test('graphicEq — ISO 266 nominal keys (31.5, 63) build filters', () => {
 	// ISO 266 so these exact nominal keys must resolve, not just 1000/2000/...
 	let p = { gains: { 31.5: -12, 63: 6 }, fs: 44100 }
 	audio.graphicEq(dc(64, 1), p)
-	is(p._filters.length, 2, 'both ISO nominal keys (31.5, 63) built a filter')
+	is(p._filters.filter(f => !f.flat).length, 2, 'both ISO nominal keys (31.5, 63) built a filter')
 })
 
 test('graphicEq — recomputes filters when gains mutated in place', () => {
@@ -383,4 +383,45 @@ test('fitEq — recovers a peaking band from its own response and round-trips Eq
 	ok(/Filter 1: ON PK Fc \d+ Hz Gain -?[\d.]+ dB Q [\d.]+/.test(txt), 'APO line')
 	let back = audio.fromEqualizerApo(txt)
 	is(back.bands.length, r.bands.length, 'APO round trip band count')
+})
+
+// =================== automation: new coefficients keep the filter's state ===================
+// A parameter moving block to block (automation, a slider, audio's 128-sample sub-blocks) replaces the
+// coefficients; the transposed-DF-II state carries on, as in the Web Audio BiquadFilterNode. A fresh state
+// per change restarted the filter each block: on a 0.5 sine, errors up to 0.47 and a buzz at the block rate.
+// Reference: @audio/biquad's kernel over the whole signal with the same coefficient schedule, one state.
+test('lowShelf, highShelf, parametricEq, graphicEq: a moving parameter keeps the state, equal to one continuous kernel', () => {
+	let fs = 44100, n = fs, B = 128
+	let x = new Float64Array(n).map((_, i) => 0.5 * Math.sin(2 * Math.PI * 440 * i / fs))
+	let fcAt = i => 300 + 400 * i / n
+	for (let [name, run, coef] of [
+		['lowShelf', (blk, p, fc) => { p.fc = fc; p.gain = 6; p.fs = fs; audio.lowShelf(blk, p) }, fc => biquad.lowshelf(fc, 0.707, fs, 6)],
+		['highShelf', (blk, p, fc) => { p.fc = fc; p.gain = 6; p.fs = fs; audio.highShelf(blk, p) }, fc => biquad.highshelf(fc, 0.707, fs, 6)],
+		['parametricEq', (blk, p, fc) => { p.bands = [{ fc, Q: 1, gain: 6, type: 'peak' }]; p.fs = fs; audio.parametricEq(blk, p) }, fc => biquad.peaking(fc, 1, fs, 6)],
+		['graphicEq', (blk, p, fc) => { p.gains = { 1000: 6 + (fc - 300) / 100 }; p.fs = fs; audio.graphicEq(blk, p) }, fc => biquad.peaking(1000, 1.4, fs, 6 + (fc - 300) / 100)],
+	]) {
+		let y = Float64Array.from(x), ref = Float64Array.from(x), p = {}, s = biquad.state(), max = 0
+		for (let i = 0; i < n; i += B) {
+			let fc = fcAt(i)
+			run(y.subarray(i, i + B), p, fc)
+			biquad.process(ref.subarray(i, i + B), coef(fc), s)
+		}
+		for (let i = 0; i < n; i++) max = Math.max(max, Math.abs(y[i] - ref[i]))
+		ok(max < 1e-12, `${name}: max |Δ| ${max.toExponential(1)}`)
+	}
+})
+
+// A band at exactly 0 dB is the identity, yet its state must stay live. Skipped, it froze: returning to 0 dB dropped
+// the band's ringing output at once, and leaving 0 dB resumed the state frozen back then; both clicked on a steady tone.
+test('graphicEq: a band returning to 0 dB and leaving it again stays continuous', () => {
+	let fs = 44100, n = fs, B = 128, q = n / 4, f0 = 1000, amp = 0.5
+	let x = new Float64Array(n).map((_, i) => amp * Math.sin(2 * Math.PI * f0 * i / fs))
+	let y = Float64Array.from(x), p = { fs }
+	for (let i = 0; i < n; i += B) { p.gains = { 1000: (i / q | 0) % 2 ? 6 : 0 }; audio.graphicEq(y.subarray(i, i + B), p) }  // 0, +6, 0, +6 dB
+	// steady-state bound: a sine of amplitude a steps at most 2a·sin(πf/fs) per sample; the loudest here is +6 dB at fc
+	let bound = 2 * amp * 10 ** (6 / 20) * Math.sin(Math.PI * f0 / fs)
+	let step = i0 => { let m = 0; for (let i = i0; i < i0 + 64; i++) m = Math.max(m, Math.abs(y[i] - y[i - 1])); return m }
+	let at = k => Math.ceil(k * q / B) * B  // first block of quarter k
+	ok(step(at(3)) <= bound, `+6 dB again: max step ${step(at(3)).toFixed(4)} ≤ ${bound.toFixed(4)}`)
+	ok(step(at(2)) <= bound, `back to 0 dB: max step ${step(at(2)).toFixed(4)} ≤ ${bound.toFixed(4)}`)
 })

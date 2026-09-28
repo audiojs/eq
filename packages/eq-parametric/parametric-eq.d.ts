@@ -25,9 +25,10 @@ export interface ParametricEqParams {
  * Apply an N-band parametric EQ in place — one RBJ biquad per band (peaking, low-shelf,
  * or high-shelf per `band.type`), cascaded in `bands` order.
  *
- * `params` doubles as persisted state: the filter cascade is cached on `params` and only
- * rebuilt when any band's `fc`/`Q`/`gain`/`type` or `fs` changes (compared by value, not
- * reference), so passing the *same* params object across successive calls carries filter
- * state across block boundaries automatically.
+ * `params` doubles as persisted state: the filter cascade is cached on `params`; a change of
+ * any band's `fc`/`Q`/`gain`/`type` or `fs` (compared by value, not reference) rebuilds only
+ * the coefficients and each band's state carries over, so passing the *same* params object
+ * across successive calls carries filter state across block boundaries automatically and
+ * automation is click-free.
  */
 export default function parametricEq<T extends number[] | Float32Array | Float64Array>(data: T, params: ParametricEqParams): T

@@ -13,8 +13,9 @@ export interface HighShelfParams {
 /**
  * Apply an RBJ high-shelf biquad in place.
  *
- * `params` doubles as persisted state: coefficients and filter memory are cached on it
- * and only rebuilt when `fc`/`gain`/`Q`/`fs` change, so passing the *same* params object
- * across successive calls carries filter state across block boundaries automatically.
+ * `params` doubles as persisted state: coefficients and filter memory are cached on it; a
+ * change of `fc`/`gain`/`Q`/`fs` rebuilds only the coefficients and the memory carries over,
+ * so passing the *same* params object across successive calls carries filter state across
+ * block boundaries automatically and automation is click-free.
  */
 export default function highShelf<T extends number[] | Float32Array | Float64Array>(data: T, params: HighShelfParams): T
