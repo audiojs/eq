@@ -1,6 +1,6 @@
 {
   "name": "@audio/eq",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "type": "module",
   "sideEffects": false,
   "description": "Equalization & tone shaping — umbrella for @audio/eq-* atoms (shelves, parametric, graphic, baxandall, tilt, crossover)",

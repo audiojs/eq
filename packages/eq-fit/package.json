@@ -1,6 +1,6 @@
 {
   "name": "@audio/eq-fit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Fit an N-band parametric EQ (RBJ peaking + shelves) to a target magnitude curve — greedy init + Levenberg–Marquardt refinement",
   "type": "module",
   "sideEffects": false,

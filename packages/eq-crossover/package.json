@@ -1,6 +1,6 @@
 {
   "name": "@audio/eq-crossover",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "N-way crossover network using Linkwitz-Riley filters",
   "type": "module",
   "sideEffects": false,
