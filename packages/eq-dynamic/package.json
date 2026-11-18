@@ -1,6 +1,6 @@
 {
   "name": "@audio/eq-dynamic",
-  "version": "1.2.3",
+  "version": "1.3.0",
   "description": "Dynamic EQ — per-band peaking gain driven by band energy (Pro-Q3/soothe class, generalized de-esser)",
   "type": "module",
   "sideEffects": false,
