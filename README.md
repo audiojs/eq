@@ -40,11 +40,12 @@ Most leaves export their processor as default. The FIR leaf's named `design` is 
 - Frequencies and `fs` are Hz; `fs` defaults to 44100. Gains are dB. Dynamic-EQ attack/release are milliseconds. Use each leaf's options for Q versus shelf-slope conventions.
 - Shelves, parametric, graphic, Baxandall and tilt accept `Float32Array`, `Float64Array` or `number[]`. Their params object is required even when empty. They mutate the supplied buffer and return that exact reference, preserving its array type.
 - These stateful filters store coefficients and history on params. Keep one params object per channel/instance and reuse it across chunks. Use a fresh object to reset. Parameter changes rebuild the affected filters; they are not automatically smoothed for live modulation.
+- In the `/audio` processors a gain (`geq`'s bands, `baxandall`'s `bass` and `treble`, `tilt`'s `gain`) glides sample by sample along a host's ramp, a frequency is smoothed over 20 ms, and `dyneq`'s `mode` fades over 20 ms. They write their sections by `@audio/biquad`'s arithmetic themselves, so a block allocates nothing whichever `@audio/biquad` is installed.
 - `firEq` accepts typed arrays and compensates FIR group delay by reading ahead within the whole buffer, with zero-padded edges. `dynamicEq` takes `Float32Array` and starts its detector/filter state fresh each call. Neither function preserves history between chunks.
 - `fitEq` returns bands, fit error and a suggested preamp. Apply that preamp separately when processing the bands; `parametricEq` does not apply it. Check resulting peaks: a magnitude-response headroom estimate does not guarantee a time-domain peak ceiling.
 
 To process successive chunks with the example's EQ, call `parametricEq(chunk, params)` for each chunk. To preserve each original, pass `chunk.slice()`. Do not share that params object between left and right channels.
 
-The `/audio` exports available on some leaves are host processor factories, a separate API from these buffer functions. Consult their parameter metadata for restart and streaming limits; a buffer function's existence does not establish AudioWorklet or native-plugin support.
+The `/audio` exports available on some leaves are host processor factories, a separate API from these buffer functions. They hold a frequency above 0.49 of the sample rate there, as every `/audio` processor of [@audio/filter](https://github.com/audiojs/filter) does: past Nyquist a section's poles leave the unit circle. Consult their parameter metadata for restart and streaming limits; a buffer function's existence does not establish AudioWorklet or native-plugin support.
 
 Extracted from [filter](https://github.com/audiojs/filter). Headphone crossfeed lives in `@audio/spatial-crossfeed`.

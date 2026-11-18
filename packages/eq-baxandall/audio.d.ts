@@ -25,6 +25,7 @@ export interface BaxandallOptions {
 export declare const baxandall: {
   (ctx: Ctx): Process
   channels: "any"
+  tail: (at: { sampleRate: number, params: Live, buffers: {} }) => number
   params: {
     /** -15..15 dB (default 0) */
     "bass": { type: "number", default: 0 }

@@ -27,6 +27,8 @@ for (let buf of stream) baxandall(buf, params)
 
 Pass the same `params` object across successive calls — both shelves' coefficients and filter memory are cached on it and only rebuilt when their own gain/frequency/`fs` change, so state carries across block boundaries automatically.
 
+The `/audio` processor holds `fBass` and `fTreble` at 0.49 of the sample rate: past Nyquist a shelf has poles outside the unit circle, and every `/audio` processor of @audio/filter and @audio/eq keeps this one rule. `bass` and `treble` are each smoothed (20 ms) and glided sample by sample: a host's ramp of it is one line, the same however the host cuts its calls (it hands each call the value at its first frame, so the line is played 32 frames late); held, it is the value itself: while one moves, its shelf is designed for each frame's gain. `fBass` and `fTreble` are smoothed (20 ms): a host ramps them, the shelves retuned at each call's values. The shelves are written by `@audio/biquad`'s arithmetic in the processor itself, so a block allocates nothing whichever `@audio/biquad` is installed.
+
 **Use when:** a simple two-knob tone stack — mixer channel strip, guitar amp voicing, quick "warmer/brighter" macro control.
 
 ---

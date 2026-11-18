@@ -34,6 +34,8 @@ dynamicEq(data, { fs: 44100, bands: [
 
 Unlike the biquad-based atoms in this family, `params` does **not** persist state across calls — every call allocates fresh sidechain/audio-path biquad state and envelope followers starting at zero. Each call is a self-contained batch pass, not a streaming chunk: call it once with the whole buffer rather than chunk-by-chunk.
 
+The host processor `dyneq` of `@audio/eq-dynamic/audio` streams: it gathers each 64-sample block and plays it out 63 samples later (its declared latency), so its output is this whole-buffer call's, that much later, whatever blocks the host calls it with. It holds `fc` at 0.49 of the sample rate: past Nyquist the band's sections have poles outside the unit circle, and every `/audio` processor of @audio/filter and @audio/eq keeps this one rule. `fc` is smoothed (20 ms): a host ramps it, each block taking the value in force. A new `mode` moves the output from the old mode's band to the new one's over 20 ms (the band's gain flips sign, which its halving each block would step at once). Its tail is, for any input within 0 dBFS, at most as long as the band can stay moving once the input stops (bounded, from the detector's largest output and its ring), and no longer than the band's ring at its reach (measured: never short of tones and square waves at `fc` from -60 to 0 dB, a DC step, an impulse and noise). The band's and the detector's sections are written by `@audio/biquad`'s arithmetic in the processor itself, so a block allocates nothing whichever `@audio/biquad` is installed.
+
 **Use when:** de-essing, resonance taming, mix-bus "automatic EQ" that only reacts when a band gets too loud — anywhere a static EQ would need constant automation.
 
 ---

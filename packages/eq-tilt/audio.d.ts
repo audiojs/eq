@@ -21,6 +21,7 @@ export interface TiltOptions {
 export declare const tilt: {
   (ctx: Ctx): Process
   channels: "any"
+  tail: (at: { sampleRate: number, params: Live, buffers: {} }) => number
   params: {
     /** -12..12 dB (default 0) */
     "gain": { type: "number", default: 0 }

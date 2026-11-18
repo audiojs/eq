@@ -37,6 +37,7 @@ export interface GeqOptions {
 export declare const geq: {
   (ctx: Ctx): Process
   channels: "any"
+  tail: (at: { sampleRate: number, params: Live, buffers: {} }) => number
   params: {
     /** -15..15 dB (default 0) */
     "g31": { type: "number", default: 0 }

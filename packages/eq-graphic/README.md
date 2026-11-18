@@ -24,6 +24,8 @@ for (let buf of stream) graphicEq(buf, params)
 
 Pass the same `params` object across successive calls — the filter cascade is cached on it; a change of `gains`/`fs` by value rebuilds only the coefficients and each band's state carries over, so state continues across block boundaries and automation is click-free.
 
+The `/audio` processor `geq` holds a band above 0.49 of the sample rate there (the 16 kHz band at 22.05 kHz; the 4, 8 and 16 kHz bands at 8 kHz): past Nyquist a band's section has poles outside the unit circle, and every `/audio` processor of @audio/filter and @audio/eq keeps this one rule. Each band's gain is smoothed (20 ms) and glided sample by sample: a host's ramp of it is one line, the same however the host cuts its calls (it hands each call the value at its first frame, so the line is played 32 frames late); held, it is the value itself: while a gain moves, its band's section is designed for each frame's gain. The sections are written by `@audio/biquad`'s peaking arithmetic in the processor itself, so a block allocates nothing whichever `@audio/biquad` is installed.
+
 **Use when:** the classic mixing-console/PA slider EQ — fixed bands, familiar layout, quick broad-strokes shaping.
 
 ---

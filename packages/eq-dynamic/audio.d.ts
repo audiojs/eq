@@ -33,8 +33,8 @@ export interface DyneqOptions {
 export declare const dyneq: {
   (ctx: Ctx): Process
   channels: "any"
-  streaming: false
-  tail: 0.2
+  latency: 63
+  tail: (at: { sampleRate: number, params: Live, buffers: {} }) => number
   params: {
     /** 40..16000 Hz (default 6000) */
     "fc": { type: "number", default: 6000 }

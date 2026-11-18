@@ -40,3 +40,25 @@ export interface DynamicEqParams {
  * rather than a streaming chunk. Call it once with the whole buffer, not chunk-by-chunk.
  */
 export default function dynamicEq(data: Float32Array, params?: DynamicEqParams): Float32Array
+
+/**
+ * One band over `data[pos..end)` in place, allocating nothing: what the streaming `/audio` manifest calls on each
+ * 64-frame block. The block's own level sets its gain, then the block is filtered at that gain. `s` the band's state, a
+ * `Float64Array(10)` of the sidechain biquad's dx1, dx2, dy1, dy2, the envelope, the audio path's x1, x2, y1, y2 and the
+ * gain, kept from block to block; `set` a `Float64Array` of fc, Q, fs, threshold, ratio, maxGain, the attack and
+ * release coefficients (exp(−1/(ms·0.001·fs))) and 1 for `'up'`; `det` the sidechain bandpass section; `c` a section
+ * the peaking coefficients are written into (computed here, by `@audio/biquad`'s arithmetic). `fade`, when given and
+ * under way (`dynamicFade` starts one), moves the output from the mode left to this one over its course.
+ */
+export function dynamicBlock(data: Float32Array | Float64Array, pos: number, end: number, s: Float64Array, set: Float64Array,
+  det: { b0: number, b1: number, b2: number, a1: number, a2: number }, c: { b0: number, b1: number, b2: number, a1: number, a2: number },
+  fade?: Float64Array): Float32Array | Float64Array
+
+/**
+ * Starts a fade from the mode in force to the other, or turns one under way back, as a host switches `mode`: the other
+ * mode's gain is this one's negated (the targets are, and both halve their distance each block from the same history),
+ * so `s[9]` is negated, and the band of the mode left runs on beside it, weighted from 1 (or from the weight it has where
+ * a fade under way turns back) down along t²(3 − 2t). `fade` a `Float64Array(5)` of where it is (0 to 1; made at 1,
+ * none under way), its step a frame, the weight it began from, and the mode left's y1, y2.
+ */
+export function dynamicFade(fade: Float64Array, s: Float64Array): Float64Array

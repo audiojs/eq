@@ -4,7 +4,7 @@
  * @module  audio-filter/eq/graphic-eq
  */
 
-import { peaking, filter } from '@audio/biquad'
+import { peaking, filter, process } from '@audio/biquad'
 
 // ISO 266 / IEC 61260 1/1-octave nominal center frequencies
 let BANDS = [31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]
@@ -37,5 +37,19 @@ export default function graphicEq (data, params) {
 		else f.state = null
 	}
 
+	return data
+}
+
+/**
+ * The bands over data in place, allocating nothing, by graphicEq's rule: `sections` each band's peaking section,
+ * `gains` each band's dB (a band at 0 runs while its state rings out, then rests, its state zeroed), `states` each
+ * band's Float64Array(2), kept from call to call
+ */
+export function graphicBlock (data, sections, gains, states) {
+	for (let i = 0; i < sections.length; i++) {
+		let s = states[i]
+		if (gains[i] !== 0 || Math.abs(s[0]) + Math.abs(s[1]) > 1e-30) process(data, sections[i], s)
+		else s[0] = s[1] = 0
+	}
 	return data
 }

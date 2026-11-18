@@ -21,3 +21,10 @@ export interface GraphicEqParams {
  * carries filter state across block boundaries automatically and automation is click-free.
  */
 export default function graphicEq<T extends number[] | Float32Array | Float64Array>(data: T, params: GraphicEqParams): T
+
+/**
+ * The bands over `data` in place, allocating nothing, by `graphicEq`'s rule: what the `/audio` manifest calls.
+ * `sections` each band's peaking section, `gains` each band's dB (a band at 0 runs while its state rings out, then
+ * rests, its state zeroed), `states` each band's `Float64Array(2)`, kept from call to call.
+ */
+export function graphicBlock<T extends Float32Array | Float64Array>(data: T, sections: { b0: number, b1: number, b2: number, a1: number, a2: number }[], gains: Float64Array, states: Float64Array[]): T

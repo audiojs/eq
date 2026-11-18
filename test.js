@@ -2,7 +2,12 @@ import test, { almost, ok, is } from 'tst'
 import * as audio from './index.js'
 import * as biquad from '@audio/biquad'
 import { lowshelf, highshelf } from 'digital-filter/iir/biquad.js'
-import { dftMag, magDB, impulse, dc, EPSILON, LOOSE } from './test/util.js'
+import { dftMag, magDB, impulse, dc, EPSILON, LOOSE, rings, collections } from './test/util.js'
+import { fileURLToPath } from 'node:url'
+import { geq } from '@audio/eq-graphic/audio'
+import { dyneq } from '@audio/eq-dynamic/audio'
+import { baxandall } from '@audio/eq-baxandall/audio'
+import { tilt } from '@audio/eq-tilt/audio'
 
 // Complex per-band frequency response (SOS cascade), for verifying flat-sum
 // crossover reconstruction — magDB() alone discards phase, which hides
@@ -424,4 +429,219 @@ test('graphicEq: a band returning to 0 dB and leaving it again stays continuous'
 	let at = k => Math.ceil(k * q / B) * B  // first block of quarter k
 	ok(step(at(3)) <= bound, `+6 dB again: max step ${step(at(3)).toFixed(4)} ≤ ${bound.toFixed(4)}`)
 	ok(step(at(2)) <= bound, `back to 0 dB: max step ${step(at(2)).toFixed(4)} ≤ ${bound.toFixed(4)}`)
+})
+
+// =================== the /audio manifests, as a host drives them ===================
+// A stub ctx (CONTRACT.md, Context), process() called in blocks of `block(i)` frames, numbers as 1-length Float32Arrays,
+// `set(i)` the values of call i
+const live = (m, set) => Object.fromEntries(Object.entries(m.params).map(([k, s]) => [k, s.type === 'number' ? Float32Array.of(set[k] ?? s.default) : set[k] ?? s.default]))
+function host (m, x, fs, set = () => ({}), block = () => 128) {
+	let proc = m({ sampleRate: fs, maxBlockSize: 1024, maxChannels: 2, params: live(m, set(0)), buffers: {} })
+	let a = Float32Array.from(x), y = new Float32Array(x.length)
+	for (let pos = 0, i = 0; pos < x.length; i++) {
+		let n = Math.min(block(i), x.length - pos)
+		proc([[a.subarray(pos, pos + n)]], [[y.subarray(pos, pos + n)]], live(m, set(i)))
+		pos += n
+	}
+	x.set(y)
+	return x
+}
+const GEQ_BANDS = [31.5, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]
+
+// A gain glides: geq's bands, baxandall's bass and treble, tilt's gain. A host ramps it in calls of 32 frames, each
+// handed the value at its first frame (CONTRACT.md: Parameters, Time); the gain at frame n is the line through those
+// values, each at its call's first frame, played 32 frames late: u(n) = v_k + (v_k+1 − v_k)·(n − 32 − p_k)/32 for
+// p_k ≤ n − 32 < p_k + 32, v_0 before; a gain held a call is the gain. Each frame runs the section @audio/biquad
+// designs at u(n), transposed direct form II as its process() runs one, computed here, bit for bit: geq's peaking at
+// each band (Q 1.4; a band held at 0 dB runs while its state rings out, then rests, graphicBlock's rule, per call);
+// baxandall's lowshelf and highshelf at their corners (Q 0.707); tilt's lowshelf at +u and highshelf at −u about the
+// pivot (Q 0.5). The gains: held, a 20 ms ramp, held, a jump back with no ramp, held
+const glideLine = (v, n) => { let t = n - 32; if (t < 0) return v[0]; let k = Math.floor(t / 32), q = t - 32 * k; return k + 1 < v.length ? v[k] + (v[k + 1] - v[k]) * q / 32 : v[v.length - 1] }
+const glidePlan = (a, b, calls) => Array.from({ length: calls }, (_, i) => Math.fround(i < 20 ? a : i < 50 ? a + (b - a) * (i - 20) / 30 : i < 80 ? b : a))
+function sections (x, design, s) {   // x through a section a frame (design(n)), in place, state s
+	for (let n = 0; n < x.length; n++) {
+		let c = design(n), v = x[n], y = c.b0 * v + s[0]
+		s[0] = c.b1 * v - c.a1 * y + s[1]
+		s[1] = c.b2 * v - c.a2 * y
+		x[n] = y
+	}
+}
+test('geq, baxandall, tilt audio.js – a gain glides: each frame @audio/biquad\'s section at the host\'s line, 32 frames late, bit for bit', () => {
+	let N = 4096, calls = N / 32
+	for (let fs of [44100, 96000]) {
+		let u = seed(fs), x = Float32Array.from({ length: N }, (_, i) => 0.4 * Math.sin(2 * Math.PI * 220 * i / fs) + 0.3 * (u() - 0.5)), names = Object.keys(geq.params)
+		// geq: each band from 0 dB to its own gain and back, so each rests at 0 dB at the end
+		let plans = names.map((n, b) => glidePlan(0, (b - 4.5) * 3, calls)), got = host(geq, Float64Array.from(x), fs, i => Object.fromEntries(names.map((n, b) => [n, plans[b][i]])), () => 32)
+		let want = Float64Array.from(x)
+		GEQ_BANDS.forEach((fc, b) => {
+			let v = plans[b], s = new Float64Array(2), at = Math.min(fc, 0.49 * fs)
+			for (let k = 0; k < calls; k++) {
+				let part = want.subarray(32 * k, 32 * k + 32), heldAt0 = (k === 0 || v[k] === v[k - 1]) && v[k] === 0
+				if (heldAt0 && !(Math.abs(s[0]) + Math.abs(s[1]) > 1e-30)) { s[0] = s[1] = 0; continue }
+				sections(part, n => biquad.peaking(at, 1.4, fs, glideLine(v, 32 * k + n)), s)
+				for (let n = 0; n < 32; n++) part[n] = Math.fround(part[n])
+			}
+		})
+		ok(got.every((y, i) => Object.is(y, Math.fround(want[i]))), `geq at ${fs}: ten bands 0 dB → −13.5 to +13.5 dB over 20 ms and back at once, each frame the band's peaking at the line`)
+		for (let [m, base, keys] of [[baxandall, { fBass: 300, fTreble: 5000 }, [['bass', 0, 12], ['treble', -6, 9]]], [tilt, { pivot: 700 }, [['gain', -6, 6]]]]) {
+			let v = Object.fromEntries(keys.map(([k, a, b]) => [k, glidePlan(a, b, calls)]))
+			let y = host(m, Float64Array.from(x), fs, i => ({ ...base, ...Object.fromEntries(keys.map(([k]) => [k, v[k][i]])) }), () => 32), w = Float64Array.from(x)
+			let at = f => Math.min(f, 0.49 * fs), run = (design) => { let s = new Float64Array(2); for (let k = 0; k < calls; k++) { let part = w.subarray(32 * k, 32 * k + 32); sections(part, n => design(32 * k + n), s) } for (let n = 0; n < N; n++) w[n] = Math.fround(w[n]) }
+			if (m === baxandall) { run(n => biquad.lowshelf(at(base.fBass), 0.707, fs, glideLine(v.bass, n))); run(n => biquad.highshelf(at(base.fTreble), 0.707, fs, glideLine(v.treble, n))) }
+			else { run(n => biquad.lowshelf(at(base.pivot), 0.5, fs, glideLine(v.gain, n))); run(n => biquad.highshelf(at(base.pivot), 0.5, fs, -glideLine(v.gain, n))) }
+			ok(y.every((q, i) => Object.is(q, w[i])), `${m.name} at ${fs}: ${keys.map(([k, a, b]) => `${k} ${a} → ${b}`).join(', ')} over 20 ms and back at once, each frame the shelves at the line`)
+		}
+	}
+})
+
+// dynamicEq sets a 64-frame block's gain from that block's level, so the manifest plays each block out once it is whole:
+// latency 63, the whole-buffer call's output that many frames later, whatever the host's blocks
+test('dyneq audio.js – streams: any host blocks give dynamicEq\'s whole-buffer output, 63 frames later', () => {
+	is(dyneq.latency, 63, 'latency 63')
+	is(dyneq.streaming, undefined, 'streams')
+	for (let [fs, set] of [[44100, {}], [48000, { fc: 300, Q: 8, threshold: -40, ratio: 10, attack: 0.5, release: 10, maxGain: 24, mode: 'up' }], [96000, { fc: 9000, threshold: -12 }]]) {
+		let x = Float64Array.from({ length: 64 * 150 }, (_, i) => (i % 3000 < 1500 ? 0.6 : 0.02) * Math.sin(i * 2 * Math.PI * (set.fc ?? 6000) / fs) + 0.05 * Math.sin(i * 0.01))
+		let want = Float32Array.from(x)
+		dynamicEq(want, { fs, bands: [{ fc: dyneq.params.fc.default, ...Object.fromEntries(Object.entries(live(dyneq, set)).map(([k, v]) => [k, typeof v === 'string' ? v : v[0]])) }] })
+		for (let sizes of [[1], [64], [127], [128], [1000], [5, 300, 61, 2, 1024]]) {
+			let k = 0, got = host(dyneq, Float64Array.from(x), fs, () => set, () => sizes[k++ % sizes.length])
+			ok(got.subarray(0, 63).every(v => v === 0) && want.subarray(0, x.length - 63).every((v, i) => Object.is(v, got[i + 63])), `${fs}, blocks of ${sizes}: dynamicEq's output 63 frames on`)
+		}
+	}
+})
+
+// Their gains glide (the test above); held through a run at random, the shelves' frequencies retune each call as the
+// kernel retunes them
+test('baxandall, tilt audio.js – a host\'s blocks, their frequencies moving between calls, give the kernel\'s output, bit for bit', () => {
+	for (let [m, kernel] of [[baxandall, audio.baxandall], [tilt, audio.tilt]]) for (let fs of [44100, 96000]) {
+		let u = seed(fs + m.name.length), x = Float64Array.from({ length: 20000 }, (_, i) => 0.4 * Math.sin(i * 0.013) + 0.2 * Math.sin(i * 0.9)), k = 0
+		let sizes = Array.from({ length: 400 }, () => [1, 7, 64, 128, 333][k++ % 5]), gains = { bass: 1, treble: 1, gain: 1 }
+		let draw = s => Math.fround(s.curve === 'log' ? s.min * (s.max / s.min) ** u() : s.min + (s.max - s.min) * u()), held = Object.fromEntries(Object.entries(m.params).filter(([n]) => gains[n]).map(([n, s]) => [n, draw(s)]))
+		let sets = Array.from({ length: 400 }, (_, i) => Object.fromEntries(Object.entries(m.params).map(([n, s]) => [n, n in held ? held[n] : (i >> 5) % 3 === 2 ? s.default : draw(s)])))
+		let got = host(m, Float64Array.from(x), fs, i => sets[i], i => sizes[i])
+		let want = Float32Array.from(x), p = { fs }
+		for (let i = 0, pos = 0; pos < x.length; pos += sizes[i++]) kernel(want.subarray(pos, pos + sizes[i]), Object.assign(p, sets[i]))
+		ok(got.every((v, i) => Object.is(v, want[i])), `${m.name} at ${fs}: the kernel's output`)
+	}
+})
+
+// A value at random in a declared range: its min a tenth of the time, its max a tenth, its default a twentieth, else
+// uniform (log-uniform on a log curve); an enum's values evenly
+function seed (s) { return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296 }
+const pick = (u, s) => {
+	if (s.type === 'enum') return s.values[Math.floor(u() * s.values.length)]
+	let r = u()
+	return r < 0.1 ? s.min : r < 0.2 ? s.max : r < 0.25 ? s.default : s.curve === 'log' ? s.min * (s.max / s.min) ** u() : s.min + (s.max - s.min) * u()
+}
+const setting = (m, u) => Object.fromEntries(Object.entries(m.params).map(([k, s]) => [k, pick(u, s)]))
+const ATOMS = { geq, dyneq, baxandall, tilt }
+
+// CONTRACT.md, process: never write NaN or Infinity. Every value of every range at every rate a host may run: each number
+// param at its min and at its max (the others at their defaults), each enum value, and 50 settings at random; full-scale
+// noise in, 2 channels, calls of 128 frames
+test('eq audio.js – every processor writes finite numbers for noise in, at the ends of its ranges and 50 points between, 8 to 192 kHz', () => {
+	let u = seed(7), noise = Float32Array.from({ length: 4096 }, () => u() * 2 - 1)
+	for (let [name, m] of Object.entries(ATOMS)) {
+		let sets = [{}], bad = []
+		for (let [k, s] of Object.entries(m.params)) {
+			if (s.type === 'number') sets.push({ [k]: s.min }, { [k]: s.max })
+			else for (let v of s.values) sets.push({ [k]: v })
+		}
+		for (let i = 0; i < 50; i++) sets.push(setting(m, u))
+		for (let fs of [8000, 22050, 44100, 48000, 96000, 192000]) for (let set of sets) {
+			let l = live(m, set), p = m({ sampleRate: fs, maxBlockSize: 128, maxChannels: 2, params: l, buffers: {} }), y = [new Float32Array(noise.length), new Float32Array(noise.length)]
+			for (let pos = 0; pos < noise.length; pos += 128) p([[noise.subarray(pos, pos + 128), noise.subarray(pos, pos + 128)]], [y.map(c => c.subarray(pos, pos + 128))], l)
+			if (!y.every(c => c.every(Number.isFinite))) bad.push(`${JSON.stringify(set)} at ${fs}`)
+		}
+		ok(!bad.length, `${name}: finite at ${sets.length} settings x 6 rates${bad.length ? `; not at ${bad.length}, e.g. ${bad[0]}` : ''}`)
+	}
+})
+
+// The declared tail against the rings each processor leaves (test/util.js rings: an impulse, the validator's noise
+// burst, a DC step, held tones, each to 60 dB under the input's level): never short, and at most 1.5 times the longest
+// ring where that is over 128 frames. Random settings in the ranges at 44.1, 48 and 96 kHz; tones at each band (geq) or
+// about the corners, and over the spectrum
+test('geq, baxandall, tilt audio.js – each tail: never short of the rings of an impulse, noise, a DC step and held tones; at most 1.5 times the longest', () => {
+	for (let [name, m] of Object.entries({ geq, baxandall, tilt })) {
+		let u = seed(name.length * 31), worst = 0, n = 0, bad = []
+		for (let si = 0; si < 18; si++) {
+			let fs = [44100, 48000, 96000][si % 3], set = setting(m, u), T = m.tail({ sampleRate: fs, params: live(m, set) }) * fs
+			let at = name === 'geq' ? GEQ_BANDS : name === 'tilt' ? [set.pivot] : [set.fBass, set.fTreble]
+			let freqs = [...at.flatMap(f => [0.7, 1, 1.4].map(k => k * f)), ...Array.from({ length: 12 }, (_, i) => 10 * (0.45 * fs / 10) ** (i / 11))]
+			let r = rings(x => host(m, x, fs, () => set), T, { fs, freqs })
+			if (r.short || r.over > 1.5) bad.push(`${JSON.stringify(set)} at ${fs}: tail ${Math.round(T)} frames, rings impulse ${r.impulse} dc ${r.dc} tone ${r.tone} noise ${r.noise}`)
+			worst = Math.max(worst, r.over)
+			n++
+		}
+		ok(!bad.length, `${name}: ${n} settings, tail at most ${worst.toFixed(2)} of the longest ring${bad.length ? `; ${bad.length} off: ${bad[0]}` : ''}`)
+		is(m.tail({ sampleRate: 44100, params: live(m, {}) }), 0, `${name} at its defaults: the identity, no tail`)
+	}
+})
+
+// dyneq's tail (eq-dynamic/audio.js): how long the band keeps moving is bounded for any input within 0 dBFS, its ring
+// while it moves is measured. Driven as a band is driven hardest: tones at fc and 5 % either side and square waves at fc
+// (their fundamental 4/π of their peak) at -60 to 0 dB in steps of 6 dB, and a DC step, an impulse and the noise burst
+// at full scale: never short of any ring, latency counted, in either mode. Random settings, four where a square wave or
+// a DC step at full scale rang past the rule before this one (to 1.07 of it), and two where a square wave at fc rings
+// past the rule with the band's reach taken at an envelope of 0 dB in place of the sum of the detector's |h| (277 frames
+// where that rule declares none, and 1.19 of it). A band that lets go before its ring ends, or that no input here
+// charges as far as the bound allows, rings shorter: on 400 random settings (200 at deep cuts and boosts) 356 rang
+// within 1.5 of the tail, the rest down to 1/4.8 of it
+test('dyneq audio.js – its tail: never short of the rings of tones and square waves about fc at -60 to 0 dB, a DC step, an impulse, noise', () => {
+	let u = seed(17), worst = 0, n = 0, over = 0, bad = [], sets = Array.from({ length: 24 }, (_, si) => [[44100, 48000, 96000][si % 3], setting(dyneq, u)])
+	sets.push([48000, { fc: 40, Q: 0.3, threshold: -60, ratio: 8.96983, attack: 82.2274, release: 10, maxGain: 24, mode: 'down' }],
+		[48000, { fc: 45.8578, Q: 7.01487, threshold: -39.3557, ratio: 19.7869, attack: 23.6527, release: 20.9964, maxGain: 17.3356, mode: 'up' }],
+		[96000, { fc: 68.5339, Q: 13.5107, threshold: -25.5844, ratio: 6.29551, attack: 90.4419, release: 15.8295, maxGain: 15.5265, mode: 'up' }],
+		[44100, { fc: 106.177, Q: 15.2699, threshold: -20.4048, ratio: 6.19785, attack: 7.20106, release: 34.4775, maxGain: 12.1353, mode: 'down' }],
+		[44100, { fc: 209.595, Q: 0.39904, threshold: 0, ratio: 6.88262, attack: 8.42942, release: 76.3655, maxGain: 9.62614, mode: 'up' }],
+		[96000, { fc: 2829.6, Q: 12.9755, threshold: -4.34911, ratio: 11.0365, attack: 0.5, release: 882.866, maxGain: 23.4345, mode: 'up' }])
+	for (let [fs, set] of sets) {
+		let T = dyneq.tail({ sampleRate: fs, params: live(dyneq, set) }) * fs
+		if (T > 0.5 * fs) continue
+		let fc = Math.min(set.fc, 0.49 * fs), longest = 0, short = false
+		for (let dB = -60; dB <= 0; dB += 6) {
+			let r = rings(x => host(dyneq, x, fs, () => set), T, { fs, freqs: [0.95 * fc, fc, 1.05 * fc], squares: [fc], amp: 10 ** (dB / 20), latency: 63 })
+			short ||= Math.max(r.tone, r.square, dB === 0 ? Math.max(r.impulse, r.dc) : 0) > Math.max(128, Math.ceil(T)) || dB === 0 && r.short
+			longest = Math.max(longest, r.tone, r.square, dB === 0 ? r.longest : 0)
+		}
+		if (short) bad.push(`${JSON.stringify(set)} at ${fs}: tail ${Math.round(T)} frames, longest ring ${longest}`)
+		if (longest > 128) { worst = Math.max(worst, T / longest); over += T > 1.5 * longest }
+		n++
+	}
+	ok(!bad.length, `dyneq: ${n} settings, never short; tail at most ${worst.toFixed(2)} of the longest ring, over 1.5 at ${over}${bad.length ? `; short at ${bad.length}: ${bad[0]}` : ''}`)
+})
+
+// dyneq's mode: a switch moves the output from the old mode's band to the new one's over 20 ms (the band's gain flips
+// sign, and its halving each block would step the output at once). Through a 0.5 tone at 300 Hz with the band cutting
+// 12 dB, at instants on and off the 64-frame grid, the host's calls cut at the change: the largest second difference
+// from the change on, against the louder of the two modes' steady outputs (a switch back passes through the louder),
+// under 1.5; a switch back 5 ms into the fade likewise; the same samples in calls of 1, 7 and 1024
+test('dyneq audio.js – a new mode fades: no step, and the same whatever the calls', () => {
+	let fs = 44100, N = 2 * fs, x = Float32Array.from({ length: N }, (_, i) => 0.5 * Math.sin(2 * Math.PI * 300 * i / fs))
+	let d2 = (y, a, b) => { let m = 0; for (let i = Math.max(a, 2); i < b; i++) m = Math.max(m, Math.abs(y[i] - 2 * y[i - 1] + y[i - 2])); return m }
+	// x in calls of `size` frames, cut at each mark, the mode at a frame the last mark's at or before it
+	let run = (marks, size) => {
+		let p = dyneq({ sampleRate: fs, maxBlockSize: 1024, maxChannels: 1, params: live(dyneq, { fc: 300 }), buffers: {} }), y = new Float32Array(N), pos = 0
+		while (pos < N) {
+			let next = marks.map(([f]) => f).find(f => f > pos) ?? N, mode = marks.filter(([f]) => f <= pos).at(-1)?.[1] ?? 'down', n = Math.min(size, next - pos)
+			p([[x.subarray(pos, pos + n)]], [[y.subarray(pos, pos + n)]], live(dyneq, { fc: 300, mode }))
+			pos += n
+		}
+		return y
+	}
+	let loud = Math.max(d2(run([], 128), 20000, 30000), d2(run([[0, 'up']], 128), 20000, 30000))
+	for (let marks of [[[9001, 'up']], [[13056, 'up']], [[17011, 'up'], [17231, 'down']]]) {
+		let at = marks[0][0], label = marks.map(([f, m]) => `${m} at ${f}`).join(', '), y = run(marks, 128), most = d2(y, at - 64, at + 30000) / loud
+		ok(most < 1.5, `down → ${label}: x${most.toFixed(2)} from the change on`)
+		for (let size of [1, 7, 1024]) ok(run(marks, size).every((v, i) => Object.is(v, y[i])), `down → ${label}: calls of ${size} frames give the same, bit for bit`)
+	}
+})
+
+// Values moving every call (dyneq's mode every 16) and at fixed values, and a second instance made after the first ran.
+// Each retune writes its sections by @audio/biquad's arithmetic in the package, so no number crosses a design call and
+// no design returns a new section, whichever @audio/biquad is installed
+test('eq audio.js – process() allocates nothing, warm, its values moving every call or fixed; nor a second instance made after the first ran', { timeout: 120000 }, async () => {
+	let file = pkg => fileURLToPath(new URL(`./packages/${pkg}/audio.js`, import.meta.url))
+	for (let [pkg, name] of [['eq-graphic', 'geq'], ['eq-dynamic', 'dyneq'], ['eq-baxandall', 'baxandall'], ['eq-tilt', 'tilt']])
+		for (let how of ['moving', 'fixed', 'second', 'second-fixed']) is(await collections(file(pkg), name, how), 0, `${name}, ${how}: no collection in 2^17 blocks of 8 frames`)
 })
